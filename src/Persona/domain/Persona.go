@@ -1,4 +1,4 @@
-// domain/persona.go
+
 package domain
 
 type Persona struct {

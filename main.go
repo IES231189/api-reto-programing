@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -16,8 +18,19 @@ import (
 	"persona_api/src/Persona/domain"
 )
 
+func cargarVariablesEntorno() {
+	if err := godotenv.Load(); err != nil {
+		log.Println(" No se encontró un archivo .env o hubo un error al cargarlo")
+	}
+}
+
 func conectarBD() *gorm.DB {
-	dsn := "appuser:SuperClave@tcp(127.0.0.1:3306)/hexagonal_db?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_NAME"),
+	)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -25,11 +38,11 @@ func conectarBD() *gorm.DB {
 	}
 
 	db.AutoMigrate(&domain.Persona{})
-
 	return db
 }
 
 func main() {
+	cargarVariablesEntorno()
 	db := conectarBD()
 
 	// Inyección de dependencias
@@ -39,7 +52,6 @@ func main() {
 
 	r := gin.Default()
 
-	
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, 
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -49,11 +61,16 @@ func main() {
 		MaxAge:           12 * time.Hour, 
 	}))
 
-	
 	r.POST("/personas", handler.CrearPersona)
 	r.GET("/personas", handler.ObtenerPersonas)
+	r.GET("/personas/conteo-genero", handler.ContarGeneros)
 	r.GET("/personas/conteo-genero-longpoll", handler.ContarGenerosLongPolling)
-	
-	fmt.Println("Servidor corriendo en http://localhost:8080")
-	r.Run(":8080")
+
+	puerto := os.Getenv("SERVER_PORT")
+	if puerto == "" {
+		puerto = "4040" 
+	}
+
+	fmt.Println("Servidor corriendo en http://localhost:" + puerto)
+	r.Run(":" + puerto)
 }

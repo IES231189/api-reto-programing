@@ -1,4 +1,4 @@
-// infraestructure/repository/persona_repository.go
+
 package repository
 
 import (

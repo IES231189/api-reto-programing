@@ -42,25 +42,23 @@ func (s *personaService) ContarPorGenero() (map[string]int, error) {
 
 func (s *personaService) ContarPorGeneroLongPolling(timeout time.Duration, cambios chan<- map[string]int) error {
 	ultimoConteo := make(map[string]int)
-	
 	for {
 		select {
 		case <-time.After(timeout):
-			return nil // Timeout sin cambios
+			return nil 
 		default:
 			conteoActual, err := s.repo.ContarPorGenero()
 			if err != nil {
 				return err
 			}
 			
-			// Verificar si hay cambios
 			if !mapasIguales(ultimoConteo, conteoActual) {
 				cambios <- conteoActual
 				ultimoConteo = conteoActual
-				return nil // Cambio detectado, terminamos
+				return nil 
 			}
 			
-			time.Sleep(1 * time.Second) // Esperar antes de revisar de nuevo
+			time.Sleep(1 * time.Second) 
 		}
 	}
 }
